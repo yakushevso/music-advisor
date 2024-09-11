@@ -16,18 +16,23 @@ public class MusicAdvisor {
                 case "categories" -> executeIfAuth(this::handleCategories);
                 case "playlists Mood" -> executeIfAuth(this::handleMoodPlaylists);
                 case "exit" -> {
-                    System.out.println("---GOODBYE!---");
+                    System.out.println(Messages.GOODBYE);
                     return;
                 }
-                default -> System.out.println("Invalid command. Please try again.");
+                default -> System.out.println(Messages.INVALID);
             }
         }
     }
 
     private void handleAuth() {
-        System.out.println("""
-                https://accounts.spotify.com/authorize?client_id=5a0fc1b91aaf4a4999e93419312f9d811&redirect_uri=http://localhost:8080&response_type=code
-                ---SUCCESS---""");
+        Config.setURI();
+        System.out.println(Messages.USE_LINK + "\n" + Config.URI);
+        new Server().run();
+        System.out.println(Messages.MAKINK);
+        Config.setTokenLink();
+        Config.ACCESS_TOKEN = new Client().getAccessToken();
+        System.out.println(Messages.RESPONCE + "\n" + Config.ACCESS_TOKEN);
+        System.out.println(Messages.SUCCESS);
         isAuth = true;
     }
 
@@ -35,7 +40,7 @@ public class MusicAdvisor {
         if (isAuth) {
             action.run();
         } else {
-            requestAuth();
+            System.out.println(Messages.ACCESS);
         }
     }
 
@@ -73,9 +78,5 @@ public class MusicAdvisor {
                 Rage Beats
                 Arab Mood Booster
                 Sunday Stroll""");
-    }
-
-    private void requestAuth() {
-        System.out.println("Please, provide access for application.");
     }
 }
