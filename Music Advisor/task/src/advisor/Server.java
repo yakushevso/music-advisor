@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class Server {
-    public void run() {
+    public void getAuthCode() {
         HttpServer server;
 
         try {
@@ -17,6 +17,8 @@ public class Server {
         }
 
         server.start();
+
+        System.out.println(Messages.USE_LINK + "\n" + Config.getAuthUri());
 
         server.createContext("/",
                 exchange -> {
