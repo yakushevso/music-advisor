@@ -1,63 +1,110 @@
 package advisor;
 
+import advisor.auth.Client;
+import advisor.auth.Server;
+import advisor.strategy.*;
+import advisor.view.ConsoleView;
+import advisor.view.Messages;
+import advisor.view.View;
+
+import java.util.List;
+import java.util.Scanner;
+
 public class MusicAdvisor {
-    private boolean isAuth;
-    private final UI ui;
-    private final Server server;
-    private final Client client;
+    private final Scanner sc = new Scanner(System.in);
+    private final AdvisorContext context = new AdvisorContext();
+    private final View view = new ConsoleView();
+    private Paginator paginator;
 
-    public MusicAdvisor() {
-        isAuth = false;
-        ui = new UI();
-        server = new Server();
-        client = new Client();
-    }
-
-    public void run() {
+    public void start() {
         while (true) {
-            String mode = ui.getUserInput();
+            String input = getInput();
 
-            switch (mode) {
-                case "auth" -> handleAuth();
-                case "new" -> executeIfAuth(this::handleNewReleases);
-                case "featured" -> executeIfAuth(this::handleFeatured);
-                case "categories" -> executeIfAuth(this::handleCategories);
-                case "playlists" -> executeIfAuth(this::handlePlaylists);
+            if (input.equals("auth")) {
+                Server.getAuthCode();
+                Client.getAccessToken();
+                continue;
+            }
+
+            if (Config.ACCESS_TOKEN == null) {
+                view.showMessage(Messages.ACCESS);
+                continue;
+            }
+
+            switch (input) {
+                case "new" -> executeStrategy(new NewReleasesAdvisorStrategy());
+                case "featured" -> executeStrategy(new FeaturedPlaylistsAdvisorStrategy());
+                case "categories" -> executeStrategy(new AllCategoriesAdvisorStrategy());
+                case "playlists" -> executeStrategy(new CategoriesPlaylistsAdvisorStrategy(getInputLine()));
+                case "next" -> navigateNext();
+                case "prev" -> navigatePrev();
                 case "exit" -> {
                     return;
                 }
-                default -> System.out.println(Messages.INVALID);
+                default -> view.showMessage(Messages.INVALID);
             }
         }
     }
 
-    private void handleAuth() {
-        server.getAuthCode();
-        client.getAccessToken();
-        isAuth = true;
+    private void executeStrategy(AdvisorStrategy strategy) {
+        context.setStrategy(strategy);
+        List<String> list = context.execute();
+
+        if (list.isEmpty()) {
+            view.showMessage(Messages.NO_MORE_PAGES);
+            paginator = null;
+            return;
+        }
+
+        paginator = new Paginator(list, Config.SIZE_PAGE);
+        displayCurrentPage();
     }
 
-    private void executeIfAuth(Runnable action) {
-        if (isAuth) {
-            action.run();
+    private void navigateNext() {
+        if (paginator == null) {
+            view.showMessage(Messages.NO_MORE_PAGES);
+            return;
+        }
+
+        if (paginator.hasNext()) {
+            paginator.nextPage();
+            displayCurrentPage();
         } else {
-            System.out.println(Messages.ACCESS);
+            view.showMessage(Messages.NO_MORE_PAGES);
         }
     }
 
-    private void handleNewReleases() {
-        System.out.print(client.getNewReleases());
+    private void navigatePrev() {
+        if (paginator == null) {
+            view.showMessage(Messages.NO_MORE_PAGES);
+            return;
+        }
+
+        if (paginator.hasPrev()) {
+            paginator.prevPage();
+            displayCurrentPage();
+        } else {
+            view.showMessage(Messages.NO_MORE_PAGES);
+        }
     }
 
-    private void handleFeatured() {
-        System.out.print(client.getFeaturedPlaylists());
+    private void displayCurrentPage() {
+        List<String> pageItems = paginator.getCurrentPage();
+        if (pageItems.isEmpty()) {
+            view.showMessage(Messages.NO_MORE_PAGES);
+            paginator = null;
+            return;
+        }
+        view.showPage(pageItems);
+        view.showPageInfo(paginator.getCurrentPageNumber(), paginator.getTotalPages());
     }
 
-    private void handleCategories() {
-        System.out.print(client.getAllCategories());
+    private String getInput() {
+        return sc.next();
     }
 
-    private void handlePlaylists() {
-        System.out.print(client.getCategoriesPlaylists(ui.getUserInputLine()));
+    private String getInputLine() {
+        String input = sc.nextLine().trim();
+        return input.isEmpty() ? "" : input;
     }
 }

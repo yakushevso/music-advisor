@@ -1,12 +1,14 @@
-package advisor;
+package advisor.auth;
 
+import advisor.Config;
+import advisor.view.Messages;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class Server {
-    public void getAuthCode() {
+    public static void getAuthCode() {
         HttpServer server;
 
         try {

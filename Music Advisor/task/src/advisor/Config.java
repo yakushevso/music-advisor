@@ -7,6 +7,7 @@ public class Config {
 
     public static String SERVER_PATH = "https://accounts.spotify.com";
     public static String API_BASE_URL = "https://api.spotify.com";
+    public static int SIZE_PAGE = 5;
 
     public static String ACCESS_TOKEN;
     public static String AUTH_CODE;
@@ -34,8 +35,8 @@ public class Config {
         return API_BASE_URL + "/v1/browse/featured-playlists";
     }
 
-    public static String getCategoryPlaylistsUrl(String categoryId) {
-        return String.format(API_BASE_URL + "/v1/browse/categories/%s/playlists", categoryId);
+    public static String getCategoryPlaylistsUrl(String name) {
+        return String.format(API_BASE_URL + "/v1/browse/categories/%s/playlists", name);
     }
 }
 
